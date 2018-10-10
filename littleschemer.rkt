@@ -314,3 +314,65 @@
       (else (cons (car l) (rember s (cdr l)))))))
 
 ; CHAPTER 6
+(define numbered?
+  (lambda (aexp)
+    (cond
+      ((atom? aexp) (number? aexp))
+      (else (and (numbered? (car aexp))
+                 (numbered? (car (cdr (cdr aexp)))))))))
+
+
+(define value
+  (lambda (nexp)
+    (cond
+      ((atom? nexp) nexp)
+      ((eq? (car (cdr nexp)) '+ ) (o+ (value (car nexp)) (value (car (cdr (cdr nexp))))))
+      ((eq? (car (cdr nexp)) '* ) (ox (value (car nexp)) (value (car (cdr (cdr nexp))))))
+      (else (o^ (value (car nexp)) (value (car (cdr (cdr nexp)))))))))
+
+; Same as value but use abstract functions (1st-sub-exp, 2nd-sub-exp and operator) to calculate the arguments
+(define value-abstract
+  (lambda (nexp)
+    (cond
+      ((atom? nexp) nexp)
+      ((eq? (operator nexp) '+ ) (o+ (value-abstract (1st-sub-exp nexp)) (value-abstract (2nd-sub-exp nexp))))
+      ((eq? (operator nexp) '* ) (ox (value-abstract (1st-sub-exp nexp)) (value-abstract (2nd-sub-exp nexp))))
+      (else (o^ (value-abstract (1st-sub-exp nexp)) (value-abstract (2nd-sub-exp nexp)))))))
+
+; Notice that the functions below work for expressions of the form ((1 + 2) * (3 ^ 4)); with a little change
+; we could change our form to (f.e) (* (+ 1 2) (^ 3 4) ). The value-abstract function would remanin the same
+; only the functions below would need to change.
+
+(define 1st-sub-exp
+  (lambda (aexp)
+    (car aexp)))
+
+(define 2nd-sub-exp
+  (lambda (aexp)
+    (car (cdr (cdr aexp)))))
+
+(define operator
+  (lambda (aexp)
+    (car (cdr aexp))))
+
+
+; Fun with '( () () () ) = 3, '() = 0 etc number representation
+(define sero?
+  (lambda (n)
+    (null? n)))
+
+(define edd1
+  (lambda (n)
+    (cons '() n)))
+
+(define zub1
+  (lambda (n)
+    (cdr n)))
+
+(define oo+
+  (lambda (n m)
+    (cond
+      ((sero? m) n)
+      (else (edd1 (oo+ n (zub1 m)))))))
+
+; CHAPTER 7
