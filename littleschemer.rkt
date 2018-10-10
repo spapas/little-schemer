@@ -288,3 +288,29 @@
     ((atom? (car l)) (car l))
     (else
      (leftmost (car l))))))
+
+(define oequal?
+  (lambda (s1 s2)
+    (cond
+      ((and (atom? s1) (atom? s2)) (eqan? s1 s2))
+      ((or  (atom? s1) (atom? s2)) #f)
+      (else (eqlist? s1 s2)))))
+
+(define eqlist?
+  (lambda (l1 l2)
+    (cond
+      ((and (null? l1) (null? l2)) #t)
+      ((or  (null? l1) (null? l2)) #f)
+      (else (and
+             (oequal? (car l1) (car l2))
+             (eqlist? (cdr l1) (cdr l2)))))))
+
+       
+(define rember
+  (lambda (s l)
+    (cond
+      ((null? l) '())
+      ((equal? (car l) s) (cdr l))
+      (else (cons (car l) (rember s (cdr l)))))))
+
+; CHAPTER 6
