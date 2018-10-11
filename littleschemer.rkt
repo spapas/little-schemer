@@ -608,3 +608,7 @@
       ((null? lat) '())
       ((test? (car lat) ) ( multiremberT test? (cdr lat)))
       (else (cons (car lat) ( multiremberT test? (cdr lat)))))))
+
+; multirember&co *is* diffucult.
+; take a look at this: http://www.michaelharrison.ws/weblog/?p=34
+; and this https://stackoverflow.com/questions/7004636/explain-the-continuation-example-on-p-137-of-the-little-schemer#7005024
