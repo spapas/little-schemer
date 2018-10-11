@@ -376,3 +376,141 @@
       (else (edd1 (oo+ n (zub1 m)))))))
 
 ; CHAPTER 7
+(define set?
+  (lambda (lat)
+    (cond
+      ((null? lat) #t)
+      ((member? (car lat) (cdr lat)) #f)
+      (else (set? (cdr lat))))))
+
+(define makeset
+  (lambda (lat)
+    (cond
+      ((null? lat) '())
+      ((member? (car lat) (cdr lat)) (makeset (cdr lat)))
+      (else (cons (car lat) (makeset (cdr lat)))))))
+
+(define makeset-mr
+  (lambda (lat)
+    (cond
+      ((null? lat) '())
+      (else (cons (car lat) (makeset-mr (multirember (car lat) (cdr lat))))))))
+
+(define subset?
+  (lambda (set1 set2)
+    (cond
+      ((null? set1) #t)
+      (else (and (member? (car set1) set2) (subset? (cdr set1) set2))))))
+
+
+(define eqset?
+  (lambda (set1 set2)
+    (and (subset? set1 set2) (subset? set2 set1))))
+
+(define intersect?
+  (lambda (set1 set2)
+    (cond
+      ((null? set1) #f)
+      (else (or (member? (car set1) set2) (intersect? (cdr set1) set2))))))
+
+(define intersect
+  (lambda (set1 set2)
+    (cond
+      ((null? set1) '())
+      ((member? (car set1) set2) (cons (car set1) (intersect (cdr set1) set2)))
+      (else (intersect (cdr set1) set2)))))
+
+       
+(define union
+  (lambda (set1 set2)
+    (cond
+      ((null? set1) set2)
+      ((member? (car set1) set2) (union (cdr set1) set2))
+      (else (cons (car set1) (union (cdr set1) set2))))))
+
+; Helper for function below
+(define append-list
+  (lambda (lat1 lat2)
+    (cond
+      ((null? lat1) lat2)
+      (else (cons (car lat1) (append-list (cdr lat1) lat2))))))
+
+; Do the union using makeset (and append-list)
+(define union-makeset
+  (lambda (set1 set2)
+    (makeset (append-list set1 set2))))
+
+(define difference
+  (lambda (set1 set2)
+    (cond
+      ((null? set1) '())
+      ((member? (car set1) set2) (difference (cdr set1) set2))
+      (else (cons (car set1) (difference (cdr set1) set2))))))
+
+(define intersectall
+  (lambda (l-set)
+    (cond
+      ((null? (cdr l-set)) (car l-set))
+      (else (intersect (car l-set) (intersectall (cdr l-set)))))))
+
+(define a-pair?
+  (lambda (x)
+    (cond
+      ((atom? x) #f)
+      ((null? x) #f)
+      ((null? (cdr x)) #f)
+      ((null? (cdr (cdr x))) #t)
+      (else #f))))
+
+(define first
+  (lambda (p)
+    (car p)))
+
+(define second
+  (lambda (p)
+    (car (cdr p))))
+
+(define build
+  (lambda (s1 s2)
+    (cons s1 (cons s2 '()))))
+
+; Careful now: a rel is a list of pairs. a fun is a rel where the 1st members of each pairs is a set. i.e a fun is a list x -> y with each x being unique.
+; Finally a fullfun is a fun where the 2nd members of each pairs is a set i.e a fullfun is a list x -> y with each x and y being unique
+; So it moves from pair (x y) to rel ( (x y) (x z) (z d) ) to fun ( (x y) (e f) (d y) ) to fullfun ( ( x y) ( e f ) ( d z ) ) 
+(define fun?
+  (lambda (rel)
+    (set? (firsts rel))))
+
+(define revrel
+  (lambda (rel)
+    (cond
+      ((null? rel) '())
+      (else (cons (build (second (car rel)) (first (car rel))) (revrel (cdr rel)))))))
+
+(define revpair
+  (lambda (p)
+    (build (second p) (first p))))
+  
+
+(define revrel-rp
+  (lambda (rel)
+    (cond
+      ((null? rel) '())
+      (else (cons (revpair (car rel)) (revrel (cdr rel)))))))
+
+
+(define seconds
+  (lambda (l)
+    (cond
+      ((null? l) '())
+      (else (cons (car (cdr (car l))) (seconds (cdr l)))))))
+
+(define fullfun?
+  (lambda (fun)
+    (set? (seconds fun))))
+
+(define one-to-one?
+  (lambda (fun)
+    (fun? (revrel fun))))
+
+; Chapter 8
