@@ -514,3 +514,97 @@
     (fun? (revrel fun))))
 
 ; Chapter 8
+(define rember-f
+  (lambda (test? a l)
+    (cond
+      ((null? l) '())
+      ((test? (car l) a) (cdr l))
+      (else (cons (car l) (rember-f test? a (cdr l)))))))
+
+(define eq?-c
+  (lambda (a)
+    (lambda (x)
+      (eq? x a))))
+
+(define eq?-salad (eq?-c 'salad) )
+; or use anonymous ((eq?-c 'salad) 'pepper)
+
+; a carried rember-f
+(define rember-fc
+  (lambda (test?)
+    (lambda (a l)
+      (cond
+        ((null? l) '())
+        ((test? (car l) a) (cdr l))
+        (else (cons (car l) ((rember-fc test?) a (cdr l))))))))
+
+; Same as insertL just call the function (insertL-f test?)
+(define insertL-f
+  (lambda (test?)
+    (lambda (new old lat)
+      (cond
+        ((null? lat) '())
+        ((eq? (car lat) old ) (cons new (cons old (cdr lat ))))
+        (else (cons (car lat) ( (insertL-f test?) new old (cdr lat))))))))
+
+(define insertR-f
+  (lambda (test?)
+    (lambda (new old lat)
+      (cond
+        ((null? lat) '())
+        ((eq? (car lat) old ) (cons old (cons new (cdr lat ))))
+        (else (cons (car lat) ( (insertR-f test?) new old (cdr lat))))))))
+
+(define seqL
+  (lambda (new old l)
+    (cons new (cons old l))))
+
+(define seqR
+  (lambda (new old l)
+    (cons old (cons new l))))
+
+(define insert-g
+  (lambda (seq)
+    (lambda (new old lat)
+      (cond
+        ((null? lat) '())
+        ((eq? (car lat) old ) (seq new old (cdr lat)))
+        (else (cons (car lat) ( (insert-g seq) new old (cdr lat))))))))
+
+(define seqS
+  (lambda (new old l)
+    (cons new l)))
+
+(define seqrem
+  (lambda (new old l) l))
+
+
+(define atom-to-function
+  (lambda (x)
+    (cond
+      ((eq? x '+) o+)
+      ((eq? x 'x) ox)
+      (else o^))))
+
+(define value-f
+  (lambda (nexp)
+    (cond
+      ((atom? nexp) nexp)
+      (else ((atom-to-function (operator nexp))
+             (value-f (1st-sub-exp nexp))
+             (value-f (2nd-sub-exp nexp)))))))
+
+(define multirember-f
+  (lambda (test?)
+    (lambda (a lat)
+      (cond
+        ((null? lat) '())
+        ((test? (car lat) a ) ( (multirember-f test?) a (cdr lat)))
+        (else (cons (car lat) ( (multirember-f test?) a (cdr lat))))))))
+
+(define multiremberT
+  (lambda (test? lat)
+    (cond
+      ((null? lat) '())
+      ((test? (car lat) ) ( multiremberT test? (cdr lat)))
+      (else (cons (car lat) ( multiremberT test? (cdr lat)))))))
