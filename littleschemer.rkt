@@ -688,3 +688,36 @@
 ; (lambda (lat L R ) (cons L ( cons R lat)))
 ; and calling it like (multiinsertLR&co 'new 'le 'ri '(le le ri ri) (lambda (lat L R ) (cons L ( cons R lat)))) would return
 ; (2 2 new le new le ri new ri new)
+
+(define oeven?
+  (lambda (n)
+    (= (* (quotient n 2) 2 ) n)))
+
+(define evens-only*
+  (lambda (l)
+    (cond
+      ((null? l) '())
+      ((atom? (car l))
+       (cond
+         ((even? (car l)) (cons (car l) (evens-only* (cdr l))))
+         (else (evens-only* (cdr l)))))
+      (else (cons (evens-only* (car l)) (evens-only* (cdr l)))))))
+
+
+(define evens-only*&co
+  (lambda (l col)
+    (cond
+      ((null? l) (col '() 1 0))
+      ((atom? (car l))
+       (cond
+         ((even? (car l)) (evens-only*&co (cdr l) (lambda (newlat p s)
+                                                     (col (cons (car l) newlat) (* p (car l)) s ))))
+         (else (evens-only*&co (cdr l) (lambda (newlat p s)
+                                         (col newlat p (+ (car l) s)))))))
+      (else (evens-only*&co (car l) (lambda (newlat1 p1 s1)
+                                      (evens-only*&co (cdr l) (lambda (newlat2 p2 s2)
+                                                                (col (cons newlat1 newlat2)
+                                                                     (* p1 p2)
+                                                                     (+ s1 s2))))))))))
+                                                      
+                            
