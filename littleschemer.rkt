@@ -734,7 +734,7 @@
 ; Let's try it with (evens-only*&co '(1 (2 3) 4) the-collector ) where the-collector is
 (define the-collector
   (lambda (l p s) (cons s (cons p l))))
-; 1st run (inputt is ( 1 (2 3 4):
+; 1st run (input is ( 1 (2 3) 4):
 ; Will go to 2nd branch and because 1 is not even will call it again with the (cdr l) = ( (2 3) 4) and
 (define collector-1
   (lambda (newlat p s)
@@ -744,9 +744,9 @@
 (define collector-2
   (lambda (newlat1 p1 s1)
     (evens-only*&co '(4) (lambda (newlat2 p2 s2)
-                           (collector-1 (cons newlat1 newlat2)
+                           (collector-1 (cons newlat1 newlat2))
                                 (* p1 p2)
-                                (+ s1 s2))))))
+                                (+ s1 s2)))))
 ; 3rd run (input is (2 3)):
 ; Will go to the 2nd branch and call evens-only*co with (cdr l) 3 and
 (define collector-3
@@ -762,3 +762,25 @@
 ; 5th run (input is '())
 ; Will go to the 1st branch and call the collector-4 with '() 1 0
 ; Now what happens.
+; (collector-4 '() 1 0) will call collector-3 with '() 1 3
+; (collector-3 '() 1 3) will call collector 2 with '(2) 2 3 
+; (collector-2 '(2) 2 3 will be like this:
+;(evens-only*&co '(4) (lambda (newlat2 p2 s2)
+;                       (collector-1 (cons '(2) newlat2))
+;                       (* 2 p2)
+;                       (+ 3 s2)
+; so we have a collector-5
+(define collector-5 (lambda (newlat2 p2 s2)
+                       (collector-1 (cons '(2) newlat2)
+                       (* 2 p2)
+                       (+ 3 s2))))
+;and there's a 6th run of evens-only*&co with input '(4) which goes to the 2nd branch and call again evens-only*co with (cdr l) '() and
+(define collector-6
+  (lambda (newlat p s)
+    (collector-5 (cons 4 newlat) (* 4 p) s)))
+;Finally for the 7nth run we'll go to the 1st branch and call collector-6 with '() 1 0                                    
+; now:
+; (collector-6 '() 1 0) calls collector-5 with '(4) 4 0
+; (collector-5 '(4) 4 0) calls collector-1 with '((2) 4) 8 3
+; (collector-1 '(2 4) 8 3 calls the-collector with '(2 4) 8 4
+; the-collector displays the result (4 8 (2) 4)
