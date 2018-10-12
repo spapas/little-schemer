@@ -668,6 +668,9 @@
        (cons oldR (cons new (multiinsertLR new oldL oldR (cdr lat)))))
       (else (cons (car lat) (multiinsertLR new oldL oldR (cdr lat)))))))
 
+; Here the collector is a function of three arguments: The first is the list (until now) the second is the number of Left insertions and the 3rd the number of right insertions
+; As we can see in each recursion we slowly build result by consing things to the newlat parameter which is passed to col either by passing new + oldL + newlat or oldR + new + newlat or (car lat) + newlat
+; and we increase either L or R (or none). When the recursion ends it will pass the empty list to newlat and zeros to L/R
 (define multiinsertLR&co
   (lambda (new oldL oldR lat col)
     (cond
@@ -681,3 +684,7 @@
       (else
        (multiinsertLR&co new oldL oldR (cdr lat) (lambda (newlat L R)
                                                    (col (cons (car lat) newlat) L R)))))))
+; For example a collector could be something like this (append L R to the front of the final list):
+; (lambda (lat L R ) (cons L ( cons R lat)))
+; and calling it like (multiinsertLR&co 'new 'le 'ri '(le le ri ri) (lambda (lat L R ) (cons L ( cons R lat)))) would return
+; (2 2 new le new le ri new ri new)
