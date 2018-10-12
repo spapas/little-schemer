@@ -720,4 +720,45 @@
                                                                      (* p1 p2)
                                                                      (+ s1 s2))))))))))
                                                       
-                            
+; This is even more difficult than multirember&co because there's a double reqursion in the third branch. The
+; first two branches (null? l) and (atom? (car l)) are more or less similar to how it works in multirember&co:
+; Recurse by removing the current item from the list and pass a function that will be used to construct the result.
+; However, the third branch (else) is more complicated. Here we need to recurse on both (car l) to drill down the
+; list and (cdr l) to process the list of other elements. In the evens-only* case we can just do that and combine
+; the results using cons. However in this case we can't do it since the results are "returned" through a list of
+; function calls. So how can we actually combine these results? Well the answer is to actually combine the functions!
+; So we first call evens-only*&co to recurse on the (car l) and then, in its collector we call it again to recurse
+; on the (cdr l) however the important thing to notice here is that the collector is used to return the combined
+; values of the calls on (car l) and (cdr l)!
+
+; Let's try it with (evens-only*&co '(1 (2 3) 4) the-collector ) where the-collector is
+(define the-collector
+  (lambda (l p s) (cons s (cons p l))))
+; 1st run (inputt is ( 1 (2 3 4):
+; Will go to 2nd branch and because 1 is not even will call it again with the (cdr l) = ( (2 3) 4) and
+(define collector-1
+  (lambda (newlat p s)
+    (the-collector newlat p (+ 1 s))))
+; 2nd run (input is ( (2 3) 4):
+; Will go to the 3rd branch and call evens-only&co with (car l) = (2 3) and
+(define collector-2
+  (lambda (newlat1 p1 s1)
+    (evens-only*&co '(4) (lambda (newlat2 p2 s2)
+                           (collector-1 (cons newlat1 newlat2)
+                                (* p1 p2)
+                                (+ s1 s2))))))
+; 3rd run (input is (2 3)):
+; Will go to the 2nd branch and call evens-only*co with (cdr l) 3 and
+(define collector-3
+  (lambda (newlat p s)
+    (collector-2 (cons 2 newlat) (* 2 p) s)))
+
+; 4th run (input is '(3))
+; Will go to the 2nd branch and call evens-only*co with (cdr l) '() and
+(define collector-4
+  (lambda (newlat p s)
+    (collector-3 newlat p (+ s 3))))
+
+; 5th run (input is '())
+; Will go to the 1st branch and call the collector-4 with '() 1 0
+; Now what happens.
