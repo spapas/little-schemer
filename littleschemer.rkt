@@ -657,3 +657,27 @@
 ; Because (collector-3 '() '() ) will call collector-2 like this (collector-2 (cons 'c '()) '()))
 ; which will call collector-1 like this (collector-1 '(c) (cons 'a '())) which will call the-collector like this
 ; (the-collector (cons 'b '(c)) '(a) ) thus the two lists will be '(b c ) and '(a)
+
+(define multiinsertLR
+  (lambda (new oldL oldR lat)
+    (cond
+      ((null? lat) '())
+      ((eq? (car lat) oldL)
+       (cons new (cons oldL (multiinsertLR new oldL oldR (cdr lat)))))
+      ((eq? (car lat) oldR)
+       (cons oldR (cons new (multiinsertLR new oldL oldR (cdr lat)))))
+      (else (cons (car lat) (multiinsertLR new oldL oldR (cdr lat)))))))
+
+(define multiinsertLR&co
+  (lambda (new oldL oldR lat col)
+    (cond
+      ((null? lat) (col '() 0 0))
+      ((eq? (car lat) oldL)
+       (multiinsertLR&co new oldL oldR (cdr lat) (lambda (newlat L R)
+                                                   (col (cons new (cons oldL newlat)) (add1 L) R))))
+      ((eq? (car lat) oldR)
+       (multiinsertLR&co new oldL oldR (cdr lat) (lambda (newlat L R)
+                                                   (col (cons oldR (cons new newlat)) L (add1 R)))))
+      (else
+       (multiinsertLR&co new oldL oldR (cdr lat) (lambda (newlat L R)
+                                                   (col (cons (car lat) newlat) L R)))))))
