@@ -612,3 +612,48 @@
 ; multirember&co *is* diffucult.
 ; take a look at this: http://www.michaelharrison.ws/weblog/?p=34
 ; and this https://stackoverflow.com/questions/7004636/explain-the-continuation-example-on-p-137-of-the-little-schemer#7005024
+
+(define multirember&co
+  (lambda (a lat col)
+    (cond
+      ((null? lat)
+       (col '() '()))
+      ((eq? (car lat) a)
+       (multirember&co a (cdr lat) (lambda (newlat seen)
+                                     (col newlat (cons (car lat) seen)))))
+      (else
+       (multirember&co a (cdr lat) (lambda (newlat seen)
+                                     (col (cons (car lat) newlat) seen)))))))
+
+; How does this return a result? It will call the passed function col (collector, which must be a function of two arguments-lists) with
+; a list of all the members of lat that were not equal (newlat, or probably not-seen) to a and a list of all the members of lat that were equal to a (seen).
+; For example this
+;; (multirember&co 'a '(a b c d e a b c) (lambda (not-seen seen) not-seen))
+; will return the *non-seen* list i.e (b c d e b c), while this
+;; (multirember&co 'a '(a b c d e a b c) (lambda (not-seen seen) seen))
+; will return the instances found i.e (a a)
+; You can do whatever you want with the collector for example print the number of instances not equal to a:
+;; (multirember&co 'a '(a b c d e a b c) (lambda (newlat seen) (length seen)))
+; What really happens is each recursive call will receive a new collector which calls the previous collector by consing a new member to the list arguments (newlat/seen) it received
+; Notice that the collector you pass will be the last one called! Let's try to see how it works. We will pass a function called the-collector which will return a complete list
+; with the found and non-found members like this:
+(define the-collector
+  (lambda (newlat seen)
+    (append-list (cons 'newlat newlat) (cons 'seen seen))))
+
+; and assume it recurses 4 times (one found, two non-found and empty lat), for example
+; with arguments like 'a '(b a c). The 1st time it is called it will have the collector-1 which will be:
+(define collector-1 (lambda (newlat seen)
+  (the-collector (cons 'b newlat) seen)))
+; the 2nd time (which will find 'a) it will have the collector-2:
+(define collector-2 (lambda (newlat seen)
+  (collector-1 newlat (cons 'a seen))))
+; the 3rd time (not found) will have colector-3
+(define collector-3 (lambda (newlat seen)
+  (collector-2 (cons 'c newlat) seen)))
+; the 4th time (final, empty lat) it will call call collector-3 with two empty lists
+;; (collector-3 '() '())
+; and the result will be as expected i.e (newlat b c seen a).
+; Because (collector-3 '() '() ) will call collector-2 like this (collector-2 (cons 'c '()) '()))
+; which will call collector-1 like this (collector-1 '(c) (cons 'a '())) which will call the-collector like this
+; (the-collector (cons 'b '(c)) '(a) ) thus the two lists will be '(b c ) and '(a)
